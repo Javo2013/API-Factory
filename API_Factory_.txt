@@ -1,0 +1,21 @@
+project/
+│
+├── app/
+│   ├── __init__.py
+│   ├── extensions.py
+│   ├── models.py
+│   │
+│   ├── blueprints/
+│   │     ├── mechanic/
+│   │     │     ├── __init__.py
+│   │     │     ├── routes.py
+│   │     │     └── schemas.py
+│   │     │
+│   │     ├── service_ticket/
+│   │     │     ├── __init__.py
+│   │     │     ├── routes.py
+│   │     │     └── schemas.py
+│
+├── config.py
+├── app.py
+└── requirements.txt

@@ -1,8 +1,9 @@
-from flask import Flask
+from flask import Flask, jsonify
 from .extensions import db, ma, migrate
+from sqlalchemy.exc import IntegrityError
+
 
 def create_app():
-
     app = Flask(__name__)
     app.config.from_object("config.DevelopmentConfig")
 
@@ -15,5 +16,9 @@ def create_app():
 
     app.register_blueprint(mechanic_bp, url_prefix="/mechanics")
     app.register_blueprint(service_ticket_bp, url_prefix="/service-tickets")
+
+    @app.errorhandler(IntegrityError)
+    def handle_integrity_error(error):
+        return jsonify({"error": "Unique constraint failed — the value already exists"}), 400
 
     return app

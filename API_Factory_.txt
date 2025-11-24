@@ -17,5 +17,5 @@ project/
 │   │     │     └── schemas.py
 │
 ├── config.py
-├── app.py
+├── main.py
 └── requirements.txt

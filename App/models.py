@@ -16,6 +16,7 @@ class Mechanic(db.Model):
     name = Column(String(100), nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     phone = Column(String(20), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
 
     service_tickets = relationship(
         "ServiceTicket",

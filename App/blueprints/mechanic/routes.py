@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from flask import request, jsonify, g, current_app
 from . import mechanic_bp
 from app.models import Mechanic, ServiceTicket
@@ -12,9 +13,10 @@ from app.utils.auth import token_required
 
 login_schema = LoginSchema()
 
-# -------------------------------------
-# TOKEN CREATION (python-jose)
-# -------------------------------------
+
+# ----------------------------------------------------
+# TOKEN CREATION
+# ----------------------------------------------------
 def encode_token(mechanic_id):
     payload = {
         "sub": mechanic_id,
@@ -31,9 +33,9 @@ def encode_token(mechanic_id):
     return token
 
 
-# -------------------------------------
-# CREATE mechanic
-# -------------------------------------
+# ----------------------------------------------------
+# CREATE MECHANIC
+# ----------------------------------------------------
 @mechanic_bp.post("/")
 def create_mechanic():
     data = request.get_json()
@@ -53,9 +55,9 @@ def create_mechanic():
     return jsonify(mechanic_schema.dump(new)), 201
 
 
-# -------------------------------------
-# GET ALL MECHANICS  (Rate Limited)
-# -------------------------------------
+# ----------------------------------------------------
+# GET ALL MECHANICS (Rate Limited)
+# ----------------------------------------------------
 @limiter.limit("5/minute")
 @mechanic_bp.get("/")
 def get_mechanics():
@@ -63,18 +65,18 @@ def get_mechanics():
     return jsonify(mechanics_schema.dump(mechanics)), 200
 
 
-# -------------------------------------
+# ----------------------------------------------------
 # GET MECHANIC BY ID
-# -------------------------------------
+# ----------------------------------------------------
 @mechanic_bp.get("/<int:id>")
 def get_mechanic(id):
     mechanic = Mechanic.query.get_or_404(id)
     return jsonify(mechanic_schema.dump(mechanic)), 200
 
 
-# -------------------------------------
-# UPDATE MECHANIC
-# -------------------------------------
+# ----------------------------------------------------
+# UPDATE MECHANIC  (Protected)
+# ----------------------------------------------------
 @mechanic_bp.put("/<int:id>")
 @token_required
 def update_mechanic(id):
@@ -89,9 +91,9 @@ def update_mechanic(id):
     return jsonify(mechanic_schema.dump(mechanic)), 200
 
 
-# -------------------------------------
-# DELETE MECHANIC
-# -------------------------------------
+# ----------------------------------------------------
+# DELETE MECHANIC  (Protected)
+# ----------------------------------------------------
 @mechanic_bp.delete("/<int:id>")
 @token_required
 def delete_mechanic(id):
@@ -101,9 +103,35 @@ def delete_mechanic(id):
     return jsonify({"message": "Mechanic deleted"}), 200
 
 
-# -------------------------------------
+# ----------------------------------------------------
+# MECHANICS ORDERED BY MOST TICKETS WORKED (Advanced Query)
+# ----------------------------------------------------
+@mechanic_bp.get("/most-tickets")
+def mechanics_most_tickets():
+    results = (
+        db.session.query(
+            Mechanic,
+            func.count(ServiceTicket.id).label("ticket_count")
+        )
+        .outerjoin(Mechanic.service_tickets)
+        .group_by(Mechanic.id)
+        .order_by(func.count(ServiceTicket.id).desc())
+        .all()
+    )
+
+    response = []
+    for mechanic, count in results:
+        response.append({
+            "mechanic": mechanic_schema.dump(mechanic),
+            "tickets_worked": count
+        })
+
+    return jsonify(response), 200
+
+
+# ----------------------------------------------------
 # LOGIN
-# -------------------------------------
+# ----------------------------------------------------
 @mechanic_bp.post("/login")
 def mechanic_login():
     data = request.get_json()
@@ -119,9 +147,9 @@ def mechanic_login():
     return jsonify({"token": token}), 200
 
 
-# -------------------------------------
-# GET TICKETS FOR LOGGED-IN MECHANIC
-# -------------------------------------
+# ----------------------------------------------------
+# MECHANIC'S OWN TICKETS (Protected)
+# ----------------------------------------------------
 @mechanic_bp.get("/my-tickets")
 @token_required
 def my_tickets():

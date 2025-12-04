@@ -5,7 +5,7 @@ from app.extensions import db
 from .schemas import mechanic_schema, mechanics_schema, LoginSchema
 
 from werkzeug.security import generate_password_hash, check_password_hash
-import jwt
+from jose import jwt
 import datetime
 from flask import current_app
 from app.utils.auth import token_required
@@ -14,13 +14,21 @@ login_schema = LoginSchema()
 
 
 # ---- TOKEN CREATION ----
+
+from jose import jwt
+
 def encode_token(mechanic_id):
     payload = {
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2),
+        "sub": mechanic_id,
         "iat": datetime.datetime.utcnow(),
-        "sub": mechanic_id
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
     }
-    return jwt.encode(payload, current_app.config["SECRET_KEY"], algorithm="HS256")
+    token = jwt.encode(
+        payload,
+        current_app.config["SECRET_KEY"],
+        algorithm="HS256"
+    )
+    return token
 
 
 # CREATE mechanic

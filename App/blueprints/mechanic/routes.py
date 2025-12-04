@@ -61,8 +61,18 @@ def create_mechanic():
 @limiter.limit("5/minute")
 @mechanic_bp.get("/")
 def get_mechanics():
-    mechanics = Mechanic.query.all()
-    return jsonify(mechanics_schema.dump(mechanics)), 200
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+
+    paginated = Mechanic.query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return jsonify({
+        "total": paginated.total,
+        "pages": paginated.pages,
+        "current_page": paginated.page,
+        "per_page": paginated.per_page,
+        "items": mechanics_schema.dump(paginated.items)
+    }), 200
 
 
 # ----------------------------------------------------

@@ -90,6 +90,10 @@ def get_mechanic(id):
 @mechanic_bp.put("/<int:id>")
 @token_required
 def update_mechanic(id):
+    # Only allow a mechanic to update themselves
+    if g.mechanic_id != id:
+        return jsonify({"error": "Unauthorized - cannot modify another mechanic"}), 401
+
     mechanic = Mechanic.query.get_or_404(id)
     data = request.get_json()
 

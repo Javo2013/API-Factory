@@ -1,25 +1,22 @@
 from functools import wraps
 from flask import request, jsonify, current_app, g
-from jose import jwt, JWTError, ExpiredSignatureError
-
+from jose import jwt, JWTError
 
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
 
-        # Check Authorization header
+        # Grab token from Authorization header
         if "Authorization" in request.headers:
-            auth_header = request.headers["Authorization"]
-            parts = auth_header.split()
-
+            auth = request.headers["Authorization"]
+            parts = auth.split()
             if len(parts) == 2 and parts[0] == "Bearer":
                 token = parts[1]
 
         if not token:
             return jsonify({"error": "Token missing"}), 401
 
-        # Decode Token
         try:
             payload = jwt.decode(
                 token,
@@ -27,11 +24,10 @@ def token_required(f):
                 algorithms=["HS256"]
             )
 
-            # Store mechanic_id for current request
+            # Store mechanic_id so routes can use it
             g.mechanic_id = payload["sub"]
+            print("TOKEN MECHANIC ID:", g.mechanic_id)
 
-        except ExpiredSignatureError:
-            return jsonify({"error": "Token expired"}), 401
         except JWTError:
             return jsonify({"error": "Invalid token"}), 401
 
